@@ -1,4 +1,4 @@
-var ssdp = require("peer-ssdp"),
+var ssdp = require("./peer-ssdp"),
 	peer = ssdp.createPeer(),
 	uuid = require('node-uuid'),
 	myUuid = uuid.v4(),
