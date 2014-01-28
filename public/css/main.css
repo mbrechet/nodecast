@@ -43,3 +43,8 @@ iframe {
 #idle div {
     -webkit-filter: blur(0px);
 }
+
+#cast hidden{
+    display:none;
+}
+

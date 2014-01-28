@@ -24,11 +24,11 @@
                     $('#idle_container').fadeOut('slow');
 
                     var url = cmd.url;
-                    var windowName = "popUp";//$(this).attr("name");
-		    var windowSize = 'width='+screen.width;', height='+screen.height;
+                    //var windowName = "popUp";//$(this).attr("name");
+		    		//var windowSize = 'width='+screen.width;', height='+screen.height;
 
-                    windows[cmd.app] = window.open(url, windowName, windowSize);
-                   // window.location = url;
+                    //windows[cmd.app] = window.open(url, windowName, windowSize);
+                   window.location = url;
                 } else if(cmd.cmd == "idle") {
                     $('#idle_container').fadeIn('slow');
                 } else if(cmd.cmd == "close") {
