@@ -294,7 +294,7 @@ var deserialize = function (msg) {
     lines.forEach(function (line) {
         if (line.length) {
             var vv = line.match(/^([^:]+):\s*(.*)$/);
-            if(vv){
+            if(vv && vv.length ===3){
                 headers[vv[1].toUpperCase()] = vv[2];
             }
         }
