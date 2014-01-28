@@ -5,14 +5,15 @@ var ssdp = require("peer-ssdp"),
 	fs = require('fs'),
 	express = require('express'),
 	http = require('http'),
-	app = express(),
-	querystring = require('querystring'),
-	request = require('superagent');
+	app = express();
+	//querystring = require('querystring'),
+	//request = require('superagent');
 var argv = require('optimist')
-    .usage('Usage: $0 --name [name]')
+    .usage('Usage: $0 --name [name] --ip [ip]')
     .demand(['name'])
     .argv;
-var name = argv.name;
+var chromecastName = argv.name;
+var ipAddr  = argv.ip || null;
 
 app.set('port', 8008);
 
@@ -125,42 +126,60 @@ wssRouter.mount(regex, '', function(request) {
 
 function getIPAddress() {
 	var n = require('os').networkInterfaces();
-	var ip = []
-	for (var k in n) {
-		var inter = n[k];
-		for (var j in inter) {
-			if (inter[j].family === 'IPv4' && !inter[j].internal) {
-				return inter[j].address
+	if(!ipAddr){
+		for (var k in n) {
+			var inter = n[k];
+			for (var j in inter) {
+				if (inter[j].family === 'IPv4' && !inter[j].internal) {
+					return inter[j].address;
+				}
 			}
 		}
+	}else{
+		return ipAddr;
 	}
 }
 
 var addr = getIPAddress();
-console.log(addr);
+console.log("*** IP used ***",addr);
 setupApps(addr);
 setupRoutes(addr);
 setupSSDP(addr);
+
+
+console.info("My UID",myUuid);
 
 
 var Apps;
 function setupApps(addr) {
 	Apps = require('./apps/apps.js');
 	Apps.init(fs, app);
-	Apps.registerApp(app, addr, "ChromeCast", "https://www.gstatic.com/cv/receiver.html?$query", "");
-	Apps.registerApp(app, addr, "YouTube", "https://www.youtube.com/tv?$query", "");
-	Apps.registerApp(app, addr, "PlayMovies", "https://play.google.com/video/avi/eureka?$query", "");
-	Apps.registerApp(app, addr, "GoogleMusic", "https://jmt17.google.com/sjdev/cast/player", "");
-	Apps.registerApp(app, addr, "GoogleCastSampleApp", "http://anzymrcvr.appspot.com/receiver/anzymrcvr.html", "");
-	Apps.registerApp(app, addr, "GoogleCastPlayer", "https://www.gstatic.com/eureka/html/gcp.html", "");
-	Apps.registerApp(app, addr, "Fling", "$query", "");
-	Apps.registerApp(app, addr, "TicTacToe", "http://www.gstatic.com/eureka/sample/tictactoe/tictactoe.html", "");
+	var data = fs.readFileSync("./chromecastAppsList.json","utf8");
+	//console.info("data",JSON.parse(data));
+	//data = data.replace("{POST_DATA}","query");
+	console.info(data);
+	data = JSON.parse(data);
+	for(var i = 0; i< data.applications.length; i++){
+		var ccastApp = data.applications[i];
+		if(!ccastApp.remove){
+			console.info("adding app", ccastApp.app_name);
+			Apps.registerApp(app, addr, ccastApp.app_name, ccastApp.url, "");
+		}	
+	}
+	// Apps.registerApp(app, addr, "ChromeCast", "https://www.gstatic.com/cv/receiver.html?$query", "");
+	// Apps.registerApp(app, addr, "YouTube", "https://www.youtube.com/tv?$query", "");
+	// Apps.registerApp(app, addr, "PlayMovies", "https://play.google.com/video/avi/eureka?$query", "");
+	// Apps.registerApp(app, addr, "GoogleMusic", "https://jmt17.google.com/sjdev/cast/player", "");
+	// Apps.registerApp(app, addr, "GoogleCastSampleApp", "http://anzymrcvr.appspot.com/receiver/anzymrcvr.html", "");
+	// Apps.registerApp(app, addr, "GoogleCastPlayer", "https://www.gstatic.com/eureka/html/gcp.html", "");
+	// Apps.registerApp(app, addr, "Fling", "$query", "");
+	// Apps.registerApp(app, addr, "TicTacToe", "http://www.gstatic.com/eureka/sample/tictactoe/tictactoe.html", "");
 }
 
 function setupRoutes(addr) {
 	app.get("/ssdp/device-desc.xml", function(req, res) {
 		fs.readFile('./device-desc.xml', 'utf8', function (err,data) {
-			data = data.replace("#uuid#", myUuid).replace("#base#","http://"+req.headers.host).replace("#name#", name);
+			data = data.replace("#uuid#", myUuid).replace("#base#","http://"+req.headers.host).replace("#name#", chromecastName);
 			res.type('xml');
 			res.setHeader("Access-Control-Allow-Method", "GET, POST, DELETE, OPTIONS");
 			res.setHeader("Access-Control-Expose-Headers", "Location");
